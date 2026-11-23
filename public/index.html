@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>노을 공중전</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/games.css">
+  <script type="importmap">{ "imports": { "three": "/vendor/three.module.js" } }</script>
+</head>
+<body data-phase="lobby">
+  <canvas id="c"></canvas>
+  <div id="vignette"></div>
+
+  <!-- 게임 화면 -->
+  <div id="hud" class="hidden">
+    <div id="timer">3:00</div>
+    <ol id="board"></ol>
+    <div id="feed"></div>
+    <div id="crosshair"></div>
+    <div id="lock" class="hidden"><span>LOCK</span></div>
+    <div id="hitmark"></div>
+    <div id="lead"></div>
+    <div id="dmgdir"><i></i></div>
+    <div id="indicators"></div>
+    <div id="buffs"></div>
+    <canvas id="radar" width="200" height="200"></canvas>
+    <div id="tvlabels">
+      <div class="tvl" id="tvl0"></div><div class="tvl" id="tvl1"></div>
+      <div class="tvl" id="tvl2"></div><div class="tvl" id="tvl3"></div>
+    </div>
+    <div id="warn" class="hidden">미사일 경보</div>
+    <div id="bottom">
+      <div id="hpwrap"><div id="hpbar"></div><span id="hptext">100</span></div>
+      <div id="skills">
+        <div class="skill" id="sk-ev"><i class="cap white"></i><b>회피</b><small>왼쪽 위</small><div class="cd"></div></div>
+        <div class="skill" id="sk-4"><i class="cap black"></i><b id="sk4-name">경적</b><small>왼쪽 아래</small><div class="cd"></div></div>
+        <div class="skill" id="sk-fire"><i class="cap red"></i><b>기관총</b><small>오른쪽 위</small><div class="cd"></div></div>
+        <div class="skill" id="sk-ms"><i class="cap blue"></i><b>미사일</b><small>오른쪽 아래</small><div class="cd"></div></div>
+      </div>
+      <div id="ultwrap" class="hidden"><div id="ultbar"></div><span id="ulttext">필살기 0%</span></div>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div id="center"></div>
+  <div id="bigcount"></div>
+
+  <!-- 로비 -->
+  <div id="lobby" class="hidden">
+    <header class="title">
+      <h1>노을 공중전</h1>
+      <p>SUNSET DOGFIGHT</p>
+    </header>
+
+    <div id="games"></div>
+
+    <div class="lobby-grid">
+      <section class="panel" id="me-panel">
+        <h2>내 비행기</h2>
+        <div id="me-slot"></div>
+        <label class="field">이름 <input id="name" maxlength="10" autocomplete="off" placeholder="이름"></label>
+        <button id="btn-serial">컨트롤러 연결</button>
+        <div id="ctrl-status">컨트롤러 없음 (키보드 가능)</div>
+        <div class="row">
+          <button id="btn-calib" class="ghost small">기울기 다시 설정</button>
+          <label class="check"><input type="checkbox" id="invert"> 상하 반전</label>
+        </div>
+        <button id="btn-ready" class="big">준비 완료</button>
+        <p class="hint">아무 버튼 = 준비 / 키보드 Enter</p>
+      </section>
+
+      <section class="panel" id="slots-panel">
+        <h2>참가자</h2>
+        <div id="slots"></div>
+        <div class="settings">
+          <div class="seg" id="mode">
+            <button data-v="easy">체험 모드<small>조준 보조</small></button>
+            <button data-v="pro">고수 모드<small>부스터, 필살기</small></button>
+          </div>
+          <div class="seg small" id="rtime">
+            <button data-v="60">1분</button><button data-v="120">2분</button><button data-v="180">3분</button><button data-v="300">5분</button>
+          </div>
+          <div class="row">
+            <label class="check"><input type="checkbox" id="bots"> 빈자리는 AI로 채우기</label>
+            <button id="btn-start" class="ghost small">지금 바로 시작</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="rank-panel">
+        <h2>오늘의 랭킹</h2>
+        <ol id="rank"></ol>
+      </section>
+    </div>
+    <div class="keys">
+      <span><i class="cap white"></i>회피</span>
+      <span><i class="cap black"></i>경적 / 부스터</span>
+      <span>기울이기 = 조종</span>
+      <span><i class="cap red"></i>기관총</span>
+      <span><i class="cap blue"></i>미사일</span>
+      <em>키보드: ←→ 선회 · ↑↓ 상승/하강 · Space 기관총 · K 미사일 · L 회피 · B 경적/부스터 · U 필살기</em>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div id="results" class="hidden"></div>
+
+  <!-- 기울기 보정 -->
+  <div id="calib" class="hidden">
+    <div class="modal">
+      <h2>컨트롤러 기울기 설정</h2>
+      <div id="calib-steps"></div>
+      <p id="calib-text"></p>
+      <p id="calib-msg"></p>
+      <div id="calib-live"><div id="calib-dot"></div></div>
+      <button id="calib-cancel" class="ghost small">닫기</button>
+    </div>
+  </div>
+
+  <div id="help" class="hidden">
+    <div class="modal">
+      <h2>컨트롤러 연결 설정</h2>
+      <p>이 주소에서는 크롬이 USB 연결을 막아서, 노트북마다 처음 한 번 설정해야 합니다.</p>
+      <ol>
+        <li>주소창에 <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code> 입력</li>
+        <li>입력칸에 <code id="help-origin"></code> 입력</li>
+        <li>오른쪽을 <b>Enabled</b>로 바꾸고 <b>Relaunch</b> 클릭</li>
+      </ol>
+      <p class="hint">엣지: <code>edge://flags</code></p>
+      <button id="help-close" class="ghost small">닫기</button>
+    </div>
+  </div>
+
+  <div id="conn">서버에 연결하는 중…</div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>

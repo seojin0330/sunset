@@ -1,0 +1,15 @@
+# Render 무료 호스팅 설정 (예비 서버)
+# GitHub 저장소를 Render에 연결하면 이 파일대로 자동으로 만들어져요.
+services:
+  - type: web
+    name: sunset-dogfight
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"

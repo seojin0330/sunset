@@ -1,0 +1,17 @@
+/* 게임 고르기 카드 (비행기 게임 · 파티 게임 대기실 공용) */
+#games { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: auto; }
+.gcard { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; padding: 14px 16px; border-radius: 16px;
+  background: var(--panel); border: 2px solid var(--line); backdrop-filter: blur(6px); transition: transform 0.12s, border-color 0.12s; }
+.gcard:hover { transform: translateY(-2px); }
+.gcard .gi { font-size: 34px; line-height: 1; }
+.gcard b { font-size: 20px; }
+.gcard small { color: var(--muted); font-size: 13px; line-height: 1.35; }
+.gcard em { font-style: normal; font-size: 12px; color: var(--accent); margin-top: auto; }
+.gcard.on { border-color: var(--accent); background: rgba(255,138,61,0.22); box-shadow: 0 0 0 3px rgba(255,138,61,0.25); }
+#lobby { gap: 14px; }
+#lobby .lobby-grid { margin-top: 0; }
+@media (max-width: 1200px) {
+  #games { gap: 8px; }
+  .gcard small { display: none; }
+  .gcard .gi { font-size: 26px; }
+}

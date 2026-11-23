@@ -1,0 +1,17 @@
+{
+  "name": "sunset-dogfight",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "4인 LAN 공중전 게임 (ESP32-C3 기울기 컨트롤러)",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "three": "0.170.0",
+    "ws": "8.18.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

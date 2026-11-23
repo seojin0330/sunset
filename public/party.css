@@ -1,0 +1,89 @@
+/* 노을 파티 게임 전용 스타일 (기본은 style.css) */
+#lobby { gap: 14px; }
+.lobby-grid { margin-top: 0; }
+#howto h3 { margin: 4px 0 8px; font-size: 16px; color: var(--accent); }
+#howto .hint { margin: 8px 0 0; }
+.hint { color: var(--muted); font-size: 13px; margin: 0; }
+.pcaps { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 15px; }
+.pcaps span { display: flex; align-items: center; gap: 6px; }
+.pcaps .tilt { display: inline-flex; width: 18px; height: 18px; align-items: center; justify-content: center; font-style: normal; font-weight: 900; color: var(--accent); }
+#ctrl-status.ok { color: var(--green); }
+#ctrl-status.err { color: #ff9a6a; }
+#ctrl-status { font-size: 14px; color: var(--muted); }
+.settings { display: flex; flex-direction: column; gap: 8px; }
+
+/* 결과 */
+#results .sub { margin: -8px 0 0; color: var(--muted); }
+#results .team { display: flex; gap: 10px; }
+#results .team span { padding: 8px 16px; border-radius: 12px; background: var(--panel); border: 2px solid; font-size: 22px; font-weight: 800; }
+#results li b { min-width: 110px; text-align: right; }
+#results .today { background: var(--panel); border-radius: 14px; padding: 10px 18px; min-width: 360px; }
+#results .today h3 { margin: 0 0 6px; font-size: 16px; color: var(--accent); }
+#results .today div { display: flex; justify-content: space-between; gap: 20px; font-size: 17px; padding: 2px 0; }
+
+/* 게임 화면 공통 */
+#ghud { position: fixed; inset: 0; pointer-events: none; }
+.g-top { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; }
+.g-pill { background: var(--panel); border: 1px solid var(--line); padding: 6px 16px; border-radius: 12px; font-size: 22px; font-weight: 800; white-space: nowrap; }
+.g-pill small { font-size: 14px; color: var(--muted); font-weight: 600; margin-left: 6px; }
+.g-chips { position: absolute; top: 14px; left: 14px; display: flex; flex-direction: column; gap: 6px; }
+.g-chip { display: flex; align-items: center; gap: 8px; background: var(--panel); padding: 5px 12px; border-radius: 10px; font-size: 17px; font-weight: 700; border-left: 5px solid; min-width: 170px; }
+.g-chip b { margin-left: auto; color: #ffd24a; }
+.g-chip.out { opacity: 0.45; }
+.g-chip.me { box-shadow: 0 0 0 2px var(--accent); }
+.g-skills { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
+.g-sk { white-space: nowrap; position: relative; overflow: hidden; display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line); padding: 8px 14px; border-radius: 12px; font-size: 16px; font-weight: 700; min-width: 112px; }
+.g-sk .cd { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--accent); }
+.g-sk.wait { opacity: 0.5; }
+.g-sk.on { box-shadow: 0 0 0 2px #ffd24a; }
+.g-tip { position: absolute; bottom: 74px; left: 50%; transform: translateX(-50%); font-size: 18px; color: var(--muted); background: rgba(10,6,14,0.5); padding: 4px 14px; border-radius: 10px; white-space: nowrap; }
+.g-big { position: absolute; top: 22%; left: 50%; transform: translate(-50%, -50%); font-size: 64px; font-weight: 900; text-shadow: 0 4px 22px rgba(0,0,0,0.7); white-space: nowrap; }
+.g-warn { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); font-size: 34px; font-weight: 900; color: #ff6a5a; text-shadow: 0 3px 14px rgba(0,0,0,0.8); animation: blink 0.4s infinite alternate; }
+@keyframes blink { from { opacity: 1; } to { opacity: 0.35; } }
+
+/* 보트 */
+.b-pos { position: absolute; top: 14px; right: 18px; font-size: 64px; font-weight: 900; line-height: 1; text-shadow: 0 4px 18px rgba(0,0,0,0.6); }
+.b-pos small { font-size: 26px; }
+.b-speed { position: absolute; bottom: 20px; right: 24px; font-size: 44px; font-weight: 900; text-align: right; }
+.b-speed small { display: block; font-size: 14px; color: var(--muted); font-weight: 600; }
+.b-map { position: absolute; left: 14px; bottom: 14px; width: 210px; height: 210px; }
+.tvq { position: absolute; display: flex; gap: 10px; align-items: center; padding: 6px 14px; background: rgba(10,6,14,0.75); border-radius: 12px; font-size: 22px; font-weight: 800; border-left: 6px solid; white-space: nowrap; }
+.tvq .k { color: #ffd24a; font-size: 28px; }
+.tvq .st { font-size: 16px; color: var(--muted); }
+.tvsplit::before, .tvsplit::after { content: ''; position: absolute; background: rgba(0,0,0,0.85); }
+.tvsplit::before { left: 50%; top: 0; bottom: 0; width: 4px; margin-left: -2px; }
+.tvsplit::after { top: 50%; left: 0; right: 0; height: 4px; margin-top: -2px; }
+.tvsplit { position: absolute; inset: 0; }
+.tvsplit .g-pill { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; }
+.tvsplit .b-map { left: 50%; bottom: auto; top: 50%; width: 170px; height: 170px; transform: translate(-50%, 34px); }
+
+/* 달리기 */
+.d-track { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); width: min(760px, 70vw); height: 92px; background: var(--panel); border-radius: 14px; border: 1px solid var(--line); }
+.d-track .ln { position: absolute; left: 16px; right: 40px; height: 2px; background: rgba(255,255,255,0.12); }
+.d-track .hd { position: absolute; top: 8px; bottom: 8px; width: 2px; background: rgba(255,255,255,0.3); }
+.d-track .fin { position: absolute; top: 6px; bottom: 6px; right: 40px; width: 4px; background: repeating-linear-gradient(#fff 0 6px, #111 6px 12px); }
+.d-track .rn { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; border: 2px solid #000; }
+.d-mash { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); display: flex; gap: 30px; }
+.d-mash i { width: 64px; height: 64px; border-width: 4px; transition: transform 0.05s; }
+.d-mash i.hit { transform: scale(0.8); }
+.d-jump { position: absolute; top: 40%; left: 50%; transform: translateX(-50%); font-size: 46px; font-weight: 900; color: #6ab8ff; text-shadow: 0 3px 14px rgba(0,0,0,0.8); }
+.d-meter { position: absolute; bottom: 24px; right: 24px; width: 26px; height: 220px; background: rgba(0,0,0,0.4); border-radius: 13px; overflow: hidden; border: 1px solid var(--line); }
+.d-meter i { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(0deg, #38d870, #ffcc33 60%, #ff4a3d); }
+
+/* 미로 */
+.m-tilt { position: absolute; right: 16px; bottom: 16px; width: 170px; height: 170px; }
+.m-jump { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; background: var(--panel); padding: 8px 18px; border-radius: 14px; font-size: 20px; font-weight: 800; }
+.m-jump i { width: 22px; height: 22px; border-radius: 50%; border: 3px solid; opacity: 0.35; }
+.m-jump i.on { opacity: 1; }
+
+body.tv #me-panel { display: none; }
+
+/* 시작 전 설명 카드 */
+#howcard { position: fixed; left: 50%; bottom: 8%; transform: translateX(-50%); background: rgba(16,10,20,0.86); border: 2px solid var(--accent); border-radius: 20px;
+  padding: 18px 28px; display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(860px, 92vw); z-index: 5; animation: pop 0.35s ease-out; }
+#howcard .hc-title { font-size: 34px; font-weight: 900; }
+#howcard .hc-goal { font-size: 22px; color: #ffd24a; font-weight: 700; text-align: center; }
+#howcard .pcaps { font-size: 21px; justify-content: center; gap: 8px 22px; }
+#howcard .cap { width: 24px; height: 24px; }
+@keyframes pop { from { transform: translateX(-50%) scale(0.85); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+#sound-hint { position: fixed; right: 16px; bottom: 16px; background: rgba(0,0,0,0.7); padding: 8px 14px; border-radius: 10px; font-size: 15px; z-index: 40; }
