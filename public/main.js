@@ -1336,3 +1336,6 @@ function frame(now) {
 IN.autoConnect();
 connect();
 requestAnimationFrame(frame);
+
+// 무료 호스팅(Render)은 HTTP 요청이 없으면 서버를 재우므로, 4분마다 작은 파일을 하나 받아 깨워 둠
+setInterval(() => { fetch('/games.css', { cache: 'no-store' }).catch(() => {}); }, 4 * 60 * 1000);
