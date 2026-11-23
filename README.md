@@ -54,9 +54,9 @@ J3160이 고장 나거나 학교 공유기에서 기기끼리 연결이 막힐 �
 2. [render.com](https://render.com)에 GitHub 계정으로 가입해요.
 3. **New → Blueprint** → 방금 만든 저장소 선택 → **Apply**.
    `render.yaml` 설정대로 싱가포르 서버에 무료로 만들어져요 (2~3분).
-4. 생긴 주소(예: `https://sunset-dogfight-xxxx.onrender.com`)를 적어 둬요.
-   - 비행기 게임: `https://주소/?p=1` ~ `?p=4`
-   - TV: `https://주소/?tv`
+4. 지금 쓰는 주소: **https://sunset-game.onrender.com**
+   - 노트북: `https://sunset-game.onrender.com/?p=1` ~ `?p=4`
+   - TV: `https://sunset-game.onrender.com/?tv`
 
 **코드를 고치면** `git push`만 하면 Render가 자동으로 다시 올려요.
 
@@ -249,7 +249,7 @@ J3160이 고장 나거나 학교 공유기에서 기기끼리 연결이 막힐 �
 - [ ] 로비에서 한 판 리허설
 - [ ] (선택) TV 관전 화면 `/?tv`
 - [ ] 파티 게임도 한 번씩 리허설 (특히 허들 달리기 연타, 협동 미로 점프)
-- [ ] 예비 주소(Render)를 시작 5분 전에 한 번 열어 깨워 두기
+- [ ] 예비 주소 https://sunset-game.onrender.com 을 시작 5분 전에 한 번 열어 깨워 두기
 
 ## 문제 해결
 
