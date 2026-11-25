@@ -13,6 +13,7 @@ import {
   CFG, SPAWNS, newPlane, stepPlane, forwardOf, wrapAngle, clamp, terrainHeight, solidAt, segSphere,
 } from './shared/sim.js';
 import { createParty } from './party-server.js';
+import { createStats } from './stats.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3000;
@@ -34,6 +35,11 @@ const MIME = {
   '.ico': 'image/x-icon',
 };
 
+function sendJson(res, obj) {
+  res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache' });
+  res.end(JSON.stringify(obj));
+}
+
 const server = http.createServer((req, res) => {
   let urlPath;
   try {
@@ -42,6 +48,21 @@ const server = http.createServer((req, res) => {
     res.writeHead(400); res.end(); return;
   }
   if (urlPath === '/') urlPath = '/index.html';
+  // 통계 (끝나고 /stats.html 에서 보기)
+  if (urlPath === '/api/stats/today') { sendJson(res, stats.summary()); return; }
+  if (urlPath === '/api/stats') {
+    sendJson(res, { days: stats.days().map((d) => stats.summary(d)), games: stats.all() });
+    return;
+  }
+  if (urlPath === '/api/stats.csv') {
+    res.writeHead(200, {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="sunset-stats-${new Date().toISOString().slice(0, 10)}.csv"`,
+      'Cache-Control': 'no-cache',
+    });
+    res.end(stats.csv());
+    return;
+  }
   for (const [prefix, root] of ROOTS) {
     if (!urlPath.startsWith(prefix)) continue;
     const file = path.normalize(path.join(root, urlPath.slice(prefix.length)));
@@ -61,6 +82,7 @@ const server = http.createServer((req, res) => {
 
 // ---------- 랭킹 ----------
 const DATA_DIR = path.join(__dirname, 'data');
+const stats = createStats(DATA_DIR);
 const LB_FILE = path.join(DATA_DIR, 'leaderboard.json');
 let leaderboard = [];
 try { leaderboard = JSON.parse(fs.readFileSync(LB_FILE, 'utf8')); } catch { leaderboard = []; }
@@ -87,6 +109,7 @@ function saveLeaderboard() {
 const settings = { mode: 'easy', roundTime: CFG.ROUND, bots: true };
 let phase = 'lobby';
 let phaseEnd = 0;
+let roundStartedAt = 0;
 const slots = [null, null, null, null];
 const clients = new Set();
 const botBullets = [];
@@ -286,11 +309,27 @@ let firstBlood = false;
 
 function startPlaying() {
   phase = 'playing';
+  roundStartedAt = Date.now();
   phaseEnd = Date.now() + settings.roundTime * 1000;
   broadcast({ t: 'phase', phase, tl: settings.roundTime * 1000, settings });
 }
 
+// 통계에 이번 판 기록 (ended: 'finished' 정상 종료 / 'quit' ESC 종료)
+function logRound(ended) {
+  const list = slots.filter(Boolean)
+    .map((e) => ({ slot: e.slot, name: e.name, human: e.human, kills: e.kills, deaths: e.deaths, dmg: Math.round(e.dmgDealt), best: e.bestStreak }))
+    .sort((a, b) => b.kills - a.kills || a.deaths - b.deaths);
+  const players = list.map((p, i) => ({ ...p, place: i + 1, main: `${p.kills}격추`, sub: `${p.deaths}번 격추됨 · 피해 ${p.dmg} · 최다 연속 ${p.best}` }));
+  const top = players.find((p) => p.human);
+  stats.log({
+    game: 'dogfight', startedAt: roundStartedAt, ended,
+    settings: { mode: settings.mode, roundTime: settings.roundTime, bots: settings.bots },
+    players, best: top ? { name: top.name, label: `${top.kills}격추`, value: top.kills, better: 'high' } : null,
+  });
+}
+
 function endRound() {
+  logRound('finished');
   phase = 'results';
   phaseEnd = Date.now() + CFG.RESULTS * 1000;
   botBullets.length = 0;
@@ -542,7 +581,7 @@ function updateBotBullets(dt) {
 // ---------- 네트워크 ----------
 const wss = new WebSocketServer({ noServer: true });
 // 파티 게임(스모·보트·달리기·미로)은 /party 주소로 따로 연결
-const party = createParty({ dataDir: DATA_DIR, onGoto: null });
+const party = createParty({ dataDir: DATA_DIR, onGoto: null, stats });
 server.on('upgrade', (req, socket, head) => {
   let p = '/';
   try { p = new URL(req.url, 'http://x').pathname; } catch { /* */ }
@@ -628,8 +667,9 @@ function handle(ws, m) {
       break;
     }
     case 'quit': {
-      // ESC 꾹 누르기: 지금 판을 끝내고 모두 로비로 (기록은 남기지 않음)
+      // ESC 꾹 누르기: 지금 판을 끝내고 모두 로비로 (랭킹엔 안 남고, 통계에는 'ESC 종료'로 남음)
       if (phase !== 'countdown' && phase !== 'playing') return;
+      if (phase === 'playing') logRound('quit');
       botBullets.length = 0;
       botMissiles.length = 0;
       items.length = 0;

@@ -7,6 +7,7 @@ import { sfx, music } from '/audio.js';
 import { createWorld } from '/world.js';
 import { initEscQuit } from '/esc-quit.js';
 import { initKiosk } from '/kiosk.js';
+import { initTvStats } from '/tv-stats.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -524,3 +525,4 @@ setInterval(() => { fetch('/games.css', { cache: 'no-store' }).catch(() => {}); 
 // ESC를 1.5초 꾹 누르면 게임 종료 → 모두 로비로
 initEscQuit({ active: () => S.phase === 'countdown' || S.phase === 'playing', onQuit: () => send({ t: 'quit' }) });
 initKiosk();
+if (TV) initTvStats(() => (S.phase === 'lobby' ? S.lobby?.settings?.game : S.game) || 'sumo');

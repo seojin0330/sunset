@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>체험전 통계</title>
+  <style>
+    :root { --bg: #17101c; --panel: rgba(255,255,255,0.06); --line: rgba(255,255,255,0.12); --text: #f3ece8; --muted: #b9aab0; --accent: #ff8a3d; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+    main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+    h1 { margin: 0 0 4px; font-size: 30px; }
+    h2 { margin: 30px 0 12px; font-size: 19px; color: var(--accent); }
+    .top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+    .muted { color: var(--muted); font-size: 14px; }
+    .days { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+    .days button, a.btn { font: inherit; font-size: 14px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; cursor: pointer; text-decoration: none; }
+    .days button.on { border-color: var(--accent); background: rgba(255,138,61,0.2); }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 18px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+    .card b { display: block; font-size: 30px; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; }
+    .bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; padding: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; }
+    .bar { flex: 1 0 30px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: 12px; color: var(--muted); }
+    .bar i { display: block; width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; }
+    .bar span { margin-top: 4px; }
+    .bar em { font-style: normal; color: var(--text); margin-bottom: 3px; }
+    .tag { display: inline-block; font-size: 12px; padding: 1px 7px; border-radius: 6px; background: rgba(255,255,255,0.1); color: var(--muted); }
+    .tag.quit { background: rgba(255,80,80,0.18); color: #ffb3a8; }
+    .pl { margin: 1px 0; }
+    .pl .ai { color: var(--muted); }
+    .wrap { overflow-x: auto; }
+    .empty { color: var(--muted); padding: 30px 0; text-align: center; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="top">
+      <div>
+        <h1>체험전 통계</h1>
+        <div class="muted">끝난 판마다 자동으로 저장돼요 · 날짜와 시간은 한국 시간</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <a class="btn" href="/api/stats.csv">CSV로 받기 (엑셀)</a>
+        <a class="btn" href="/">게임으로</a>
+      </div>
+    </div>
+    <div class="days" id="days"></div>
+    <div id="view"><p class="empty">불러오는 중…</p></div>
+  </main>
+  <script>
+    const NAMES = { dogfight: '노을 공중전', sumo: '구슬 스모', boat: '보트 레이스', dash: '허들 달리기', maze: '협동 미로' };
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const fmtSec = (s) => (s >= 60 ? `${Math.floor(s / 60)}분 ${s % 60}초` : `${s}초`);
+    let data = null, day = null;
+
+    async function load() {
+      try {
+        data = await (await fetch('/api/stats', { cache: 'no-store' })).json();
+      } catch { document.getElementById('view').innerHTML = '<p class="empty">서버에 연결할 수 없어요</p>'; return; }
+      const days = data.days.map((d) => d.date);
+      if (!day || !days.includes(day)) day = days[days.length - 1] || null;
+      render();
+    }
+
+    function render() {
+      document.getElementById('days').innerHTML = [...data.days.map((d) => d.date), '전체']
+        .map((d) => `<button class="${d === day ? 'on' : ''}" data-d="${d}">${d === '전체' ? '전체 기간' : d}</button>`).join('');
+      document.querySelectorAll('#days button').forEach((b) => { b.onclick = () => { day = b.dataset.d; render(); }; });
+      const games = day === '전체' ? data.games : data.games.filter((g) => g.date === day);
+      const view = document.getElementById('view');
+      if (!games.length) { view.innerHTML = '<p class="empty">아직 기록된 판이 없어요. 한 판이 끝나면 여기에 나와요.</p>'; return; }
+
+      const humans = games.reduce((s, g) => s + g.humans, 0);
+      const names = new Set(games.flatMap((g) => g.players.filter((p) => p.human).map((p) => p.name)));
+      const quits = games.filter((g) => g.ended === 'quit').length;
+      const avg = Math.round(games.reduce((s, g) => s + g.sec, 0) / games.length);
+      const first = games[0].start.slice(0, 5), last = games[games.length - 1].end.slice(0, 5);
+
+      // 게임별
+      const per = {};
+      for (const k of Object.keys(NAMES)) per[k] = { plays: 0, humans: 0, sec: 0, quit: 0, best: null };
+      for (const g of games) {
+        const p = per[g.game] || (per[g.game] = { plays: 0, humans: 0, sec: 0, quit: 0, best: null });
+        p.plays++; p.humans += g.humans; p.sec += g.sec; if (g.ended === 'quit') p.quit++;
+        const b = g.best;
+        if (b && g.ended === 'finished' && typeof b.value === 'number') {
+          const better = !p.best || (b.better === 'low' ? b.value < p.best.value : b.value > p.best.value);
+          if (better) p.best = b;
+        }
+      }
+      const maxPlays = Math.max(...Object.values(per).map((p) => p.plays), 1);
+
+      // 시간대별
+      const hours = {};
+      for (const g of games) { const h = g.start.slice(0, 2); hours[h] = (hours[h] || 0) + 1; }
+      const hk = Object.keys(hours).sort();
+      const hMax = Math.max(...Object.values(hours), 1);
+
+      // 많이 한 사람 / 공중전 최다 격추
+      const cnt = {};
+      for (const g of games) for (const p of g.players) if (p.human) cnt[p.name] = (cnt[p.name] || 0) + 1;
+      const regulars = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      const kills = games.filter((g) => g.game === 'dogfight' && g.ended === 'finished')
+        .flatMap((g) => g.players.filter((p) => p.human).map((p) => ({ ...p, time: g.start, date: g.date })))
+        .sort((a, b) => b.kills - a.kills || a.deaths - b.deaths).slice(0, 10);
+
+      view.innerHTML = `
+        <div class="cards">
+          <div class="card"><span class="muted">총 판 수</span><b>${games.length}판</b></div>
+          <div class="card"><span class="muted">연 참가 (사람 자리 수)</span><b>${humans}명</b></div>
+          <div class="card"><span class="muted">다른 이름 수</span><b>${names.size}개</b></div>
+          <div class="card"><span class="muted">평균 한 판 길이</span><b>${fmtSec(avg)}</b></div>
+          <div class="card"><span class="muted">ESC로 끝낸 판</span><b>${quits}판</b></div>
+          <div class="card"><span class="muted">운영 시간</span><b style="font-size:22px">${first} ~ ${last}</b></div>
+        </div>
+
+        <h2>게임별</h2>
+        <div class="wrap"><table>
+          <tr><th>게임</th><th>판 수</th><th></th><th>연 참가</th><th>평균 길이</th><th>ESC 종료</th><th>최고 기록</th></tr>
+          ${Object.entries(per).map(([k, p]) => `<tr>
+            <td>${NAMES[k] || k}</td><td>${p.plays}</td>
+            <td style="width:24%"><div style="height:10px;border-radius:5px;background:var(--accent);width:${(p.plays / maxPlays) * 100}%"></div></td>
+            <td>${p.humans}명</td><td>${p.plays ? fmtSec(Math.round(p.sec / p.plays)) : '-'}</td><td>${p.quit}</td>
+            <td>${p.best ? `${esc(p.best.label)} <span class="muted">(${esc(p.best.name)})</span>` : '-'}</td></tr>`).join('')}
+        </table></div>
+
+        <h2>시간대별 판 수</h2>
+        <div class="bars">${hk.map((h) => `<div class="bar"><em>${hours[h]}</em><i style="height:${(hours[h] / hMax) * 100}%"></i><span>${h}시</span></div>`).join('')}</div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:0 24px">
+          <div><h2>공중전 한 판 최다 격추</h2>
+            ${kills.length ? `<table><tr><th>#</th><th>이름</th><th>격추</th><th>격추됨</th><th>시간</th></tr>
+            ${kills.map((p, i) => `<tr><td>${i + 1}</td><td>${esc(p.name)}</td><td>${p.kills}</td><td>${p.deaths}</td><td class="muted">${day === '전체' ? p.date + ' ' : ''}${p.time.slice(0, 5)}</td></tr>`).join('')}</table>` : '<p class="muted">아직 없음</p>'}
+          </div>
+          <div><h2>가장 많이 한 이름</h2>
+            <table><tr><th>#</th><th>이름</th><th>판 수</th></tr>
+            ${regulars.map(([n, c], i) => `<tr><td>${i + 1}</td><td>${esc(n)}</td><td>${c}</td></tr>`).join('')}</table>
+            <p class="muted">기본 이름(빨강 파일럿 등)은 여러 사람이 같이 쓴 경우가 많아요.</p>
+          </div>
+        </div>
+
+        <h2>전체 판 기록 (최근 순)</h2>
+        <div class="wrap"><table>
+          <tr><th>시간</th><th>게임</th><th>길이</th><th>종료</th><th>참가자와 결과</th></tr>
+          ${[...games].reverse().map((g) => `<tr>
+            <td>${day === '전체' ? g.date + '<br>' : ''}${g.start.slice(0, 5)}</td>
+            <td>${NAMES[g.game] || g.game}<br><span class="muted">${esc(Object.entries(g.settings).map(([k, v]) => `${k} ${v}`).join(' · '))}</span></td>
+            <td>${fmtSec(g.sec)}</td>
+            <td><span class="tag ${g.ended === 'quit' ? 'quit' : ''}">${g.ended === 'quit' ? 'ESC 종료' : '정상'}</span></td>
+            <td>${g.players.map((p) => `<div class="pl ${p.human ? '' : 'ai'}">${p.place}. ${esc(p.name)}${p.human ? '' : ' (AI)'} — <b>${esc(p.main)}</b> <span class="muted">${esc(p.sub)}</span></div>`).join('')}</td>
+          </tr>`).join('')}
+        </table></div>`;
+    }
+
+    load();
+    setInterval(load, 30000);
+  </script>
+</body>
+</html>

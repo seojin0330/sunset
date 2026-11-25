@@ -652,7 +652,7 @@ function createDash(ctx) {
         .sort((a, b) => (a.finishT ?? 1e9) - (b.finishT ?? 1e9) || b.x - a.x)
         .map((r) => {
           const knocks = C.HURDLES.filter((_, i) => r.knocked & (1 << i)).length;
-          return { slot: r.s, main: r.finishT !== null ? `${r.finishT.toFixed(2)}초` : `${Math.round(r.x)}m`, sub: knocks ? `허들 ${knocks}개 걸림` : '허들 완벽!' };
+          return { slot: r.s, main: r.finishT !== null ? `${r.finishT.toFixed(2)}초` : `${Math.round(r.x)}m`, sub: knocks ? `허들 ${knocks}개 걸림` : '허들 완벽' };
         });
     },
     record() {
@@ -817,7 +817,7 @@ const FACTORIES = { sumo: createSumo, boat: createBoat, dash: createDash, maze: 
 // =====================================================================
 // 방 관리
 // =====================================================================
-export function createParty({ dataDir, onGoto }) {
+export function createParty({ dataDir, onGoto, stats }) {
   const wss = new WebSocketServer({ noServer: true });
   const clients = new Set();
   const slots = [null, null, null, null];
@@ -827,6 +827,7 @@ export function createParty({ dataDir, onGoto }) {
   let game = null;
   let gameKey = null;
   let lastResults = null;
+  let startedAt = 0;
 
   // ---------- 오늘의 기록 ----------
   const REC_FILE = path.join(dataDir, 'party-records.json');
@@ -887,13 +888,30 @@ export function createParty({ dataDir, onGoto }) {
   }
   function startPlaying() {
     phase = 'playing';
+    startedAt = now();
     broadcast({ t: 'phase', phase, game: gameKey });
+  }
+  // 통계에 이번 판 기록 (ended: 'finished' 정상 종료 / 'quit' ESC 종료)
+  function logGame(ended, rec) {
+    if (!stats || !game) return;
+    let ranking = [];
+    try { ranking = game.ranking(); } catch { ranking = []; }
+    const players = ranking.map((r, i) => ({
+      slot: r.slot, name: slots[r.slot]?.name || '', human: !!slots[r.slot]?.human, place: i + 1, main: r.main, sub: r.sub,
+    }));
+    const set = { bots: settings.bots };
+    if (gameKey === 'sumo') set.rounds = settings.rounds;
+    if (gameKey === 'boat') set.laps = settings.laps;
+    let extra = null;
+    try { extra = game.team ? game.team() : null; } catch { extra = null; }
+    stats.log({ game: gameKey, startedAt, ended, settings: set, players, best: rec ? { name: rec.name, label: rec.label, value: rec.value, better: rec.better } : null, extra });
   }
   function endGame() {
     phase = 'results';
     phaseEnd = now() + RESULTS * 1000;
     const rec = game.record();
     saveRecord(gameKey, rec);
+    logGame('finished', rec);
     const ranking = game.ranking().map((r) => ({ ...r, name: slots[r.slot]?.name || '', human: !!slots[r.slot]?.human }));
     lastResults = { t: 'results', game: gameKey, ranking, team: game.team ? game.team() : null, board: board(gameKey), record: rec };
     broadcast(lastResults);
@@ -972,7 +990,8 @@ export function createParty({ dataDir, onGoto }) {
         break;
       }
       case 'quit': {
-        // ESC 꾹 누르기: 지금 게임을 끝내고 모두 로비로 (기록은 남기지 않음)
+        // ESC 꾹 누르기: 지금 게임을 끝내고 모두 로비로 (랭킹엔 안 남고, 통계에는 'ESC 종료'로 남음)
+        if (phase === 'playing') logGame('quit', null);
         if (phase === 'countdown' || phase === 'playing') toLobby();
         break;
       }
