@@ -971,6 +971,11 @@ export function createParty({ dataDir, onGoto }) {
         pushLobby();
         break;
       }
+      case 'quit': {
+        // ESC 꾹 누르기: 지금 게임을 끝내고 모두 로비로 (기록은 남기지 않음)
+        if (phase === 'countdown' || phase === 'playing') toLobby();
+        break;
+      }
       case 'start': {
         if (phase === 'lobby' && slots.some((p) => p && p.human)) startCountdown();
         break;

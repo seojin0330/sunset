@@ -627,6 +627,16 @@ function handle(ws, m) {
       pushLobby();
       break;
     }
+    case 'quit': {
+      // ESC 꾹 누르기: 지금 판을 끝내고 모두 로비로 (기록은 남기지 않음)
+      if (phase !== 'countdown' && phase !== 'playing') return;
+      botBullets.length = 0;
+      botMissiles.length = 0;
+      items.length = 0;
+      broadcastItems();
+      toLobby();
+      break;
+    }
     case 'start': {
       if (phase === 'lobby' && slots.some((e) => e && e.human)) startCountdown();
       break;

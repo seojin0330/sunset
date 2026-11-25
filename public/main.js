@@ -9,6 +9,7 @@ import { buildPlane, makeTag, setTagText } from './planes.js';
 import { FX } from './fx.js';
 import { sfx } from './audio.js';
 import { GAMES } from '/shared/party.js';
+import { initEscQuit } from './esc-quit.js';
 import * as IN from './input.js';
 
 const $ = (id) => document.getElementById(id);
@@ -1339,3 +1340,6 @@ requestAnimationFrame(frame);
 
 // 무료 호스팅(Render)은 HTTP 요청이 없으면 서버를 재우므로, 4분마다 작은 파일을 하나 받아 깨워 둠
 setInterval(() => { fetch('/games.css', { cache: 'no-store' }).catch(() => {}); }, 4 * 60 * 1000);
+
+// ESC를 1.5초 꾹 누르면 게임 종료 → 모두 로비로
+initEscQuit({ active: () => S.phase === 'countdown' || S.phase === 'playing', onQuit: () => send({ t: 'quit' }) });
