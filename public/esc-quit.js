@@ -12,22 +12,22 @@ export function initEscQuit({ active, onQuit }) {
   document.body.appendChild(box);
   const bar = box.querySelector('div > div > div');
 
-  let downAt = 0, raf = 0, fired = false;
-  const reset = () => { downAt = 0; fired = false; box.style.display = 'none'; bar.style.width = '0'; cancelAnimationFrame(raf); };
-  const tick = () => {
-    if (!downAt) return;
-    const k = Math.min(1, (performance.now() - downAt) / HOLD_MS);
-    bar.style.width = `${k * 100}%`;
-    if (k >= 1 && !fired) { fired = true; onQuit(); setTimeout(reset, 300); return; }
-    raf = requestAnimationFrame(tick);
+  // 종료는 타이머로 (화면 갱신이 멈춰도 정확히 1.5초 뒤), 막대는 CSS 애니메이션으로
+  let timer = 0;
+  const reset = () => {
+    clearTimeout(timer); timer = 0;
+    box.style.display = 'none';
+    bar.style.transition = 'none'; bar.style.width = '0';
   };
 
   addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape' || e.repeat || downAt || !active()) return;
-    downAt = performance.now();
+    if (e.key !== 'Escape' || e.repeat || timer || !active()) return;
     box.style.display = 'block';
-    raf = requestAnimationFrame(tick);
+    bar.style.transition = 'none'; bar.style.width = '0';
+    void bar.offsetWidth; // 처음부터 다시 차오르게
+    bar.style.transition = `width ${HOLD_MS}ms linear`; bar.style.width = '100%';
+    timer = setTimeout(() => { onQuit(); setTimeout(reset, 300); }, HOLD_MS);
   });
-  addEventListener('keyup', (e) => { if (e.key === 'Escape' && !fired) reset(); });
-  addEventListener('blur', () => { if (!fired) reset(); });
+  addEventListener('keyup', (e) => { if (e.key === 'Escape') reset(); });
+  addEventListener('blur', reset);
 }

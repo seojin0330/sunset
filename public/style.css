@@ -197,3 +197,6 @@ body.tv #tvlabels::after { top: 50%; left: 0; right: 0; height: 4px; margin-top:
 .tvl.lead { box-shadow: 0 0 0 3px #ffd24a; }
 #tvl0 { left: 14px; top: 14px; } #tvl1 { left: calc(50% + 14px); top: 14px; }
 #tvl2 { left: 14px; top: calc(50% + 14px); } #tvl3 { left: calc(50% + 14px); top: calc(50% + 14px); }
+
+/* 게임 중에는 마우스 커서 숨김 */
+body[data-phase="countdown"], body[data-phase="playing"], body[data-phase="countdown"] *, body[data-phase="playing"] * { cursor: none !important; }

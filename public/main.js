@@ -10,6 +10,7 @@ import { FX } from './fx.js';
 import { sfx } from './audio.js';
 import { GAMES } from '/shared/party.js';
 import { initEscQuit } from './esc-quit.js';
+import { initKiosk } from './kiosk.js';
 import * as IN from './input.js';
 
 const $ = (id) => document.getElementById(id);
@@ -1343,3 +1344,4 @@ setInterval(() => { fetch('/games.css', { cache: 'no-store' }).catch(() => {}); 
 
 // ESC를 1.5초 꾹 누르면 게임 종료 → 모두 로비로
 initEscQuit({ active: () => S.phase === 'countdown' || S.phase === 'playing', onQuit: () => send({ t: 'quit' }) });
+initKiosk();

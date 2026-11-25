@@ -212,7 +212,7 @@ export function create(core) {
     ${TV ? '' : `
     <div class="d-jump hidden" id="d-jump">점프! <small>(파랑·검정 버튼 / 뒤로 젖히기)</small></div>
     <div class="d-mash"><i class="cap white" id="d-l"></i><i class="cap red" id="d-r"></i></div>
-    <div class="g-tip" id="d-tip">흰색 · 빨강 버튼을 번갈아 빠르게! (키보드 L · J)</div>
+    <div class="g-tip" id="d-tip">흰색 · 빨강 번갈아 연타 (키보드 L · J)</div>
     <div class="g-skills"><div class="g-sk" id="d-spurt"><i class="tilt">〰</i>흔들어서 스퍼트 (1번)</div></div>
     <div class="d-meter"><i id="d-meter"></i></div>`}`;
   const el = (id) => hud.querySelector(`#${id}`);
