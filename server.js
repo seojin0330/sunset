@@ -48,6 +48,16 @@ const server = http.createServer((req, res) => {
     res.writeHead(400); res.end(); return;
   }
   if (urlPath === '/') urlPath = '/index.html';
+  if (urlPath === '/start') urlPath = '/start.html';
+  // 운영 페이지용: 이 서버의 공유기 안 주소들
+  if (urlPath === '/api/info') {
+    const ips = [];
+    for (const list of Object.values(os.networkInterfaces())) {
+      for (const a of list || []) if (a.family === 'IPv4' && !a.internal) ips.push(a.address);
+    }
+    sendJson(res, { hostname: os.hostname(), port: PORT, ips, uptime: Math.round(process.uptime()) });
+    return;
+  }
   // 통계 (끝나고 /stats.html 에서 보기)
   if (urlPath === '/api/stats/today') { sendJson(res, stats.summary()); return; }
   if (urlPath === '/api/stats') {
@@ -776,6 +786,7 @@ server.listen(PORT, () => {
   }
   console.log(`  이 컴퓨터:   http://localhost:${PORT}`);
   for (const a of addrs) console.log(`  노트북에서:  http://${a}:${PORT}`);
+  console.log(`  운영 페이지: http://${addrs[0] || 'localhost'}:${PORT}/start`);
   console.log(`  TV(관전):    http://${addrs[0] || 'localhost'}:${PORT}/?tv`);
   console.log(`  파티 게임:   http://${addrs[0] || 'localhost'}:${PORT}/party.html  (TV는 ?tv)`);
   console.log('\n  종료: Ctrl + C\n');

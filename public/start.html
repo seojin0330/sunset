@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>체험전 운영</title>
+  <style>
+    :root { --bg: #17101c; --panel: rgba(255,255,255,0.06); --line: rgba(255,255,255,0.12); --text: #f3ece8; --muted: #b9aab0; --accent: #ff8a3d; --ok: #38d870; --bad: #ff6a5a; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--text); font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(180deg, #3a1d35 0%, #17101c 360px) no-repeat, var(--bg); min-height: 100vh; }
+    main { max-width: 1080px; margin: 0 auto; padding: 32px 20px 60px; }
+    h1 { margin: 0; font-size: 40px; letter-spacing: 1px; }
+    h2 { margin: 34px 0 12px; font-size: 19px; color: var(--accent); }
+    .sub { color: var(--muted); margin-top: 4px; }
+    .addr { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 14px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+    .addr code { font-size: 22px; font-weight: 700; color: #fff; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--muted); display: inline-block; }
+    .dot.ok { background: var(--ok); box-shadow: 0 0 0 4px rgba(56,216,112,0.2); }
+    .dot.bad { background: var(--bad); }
+    .muted { color: var(--muted); font-size: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    a.tile { display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: 14px; background: var(--panel); border: 2px solid var(--line); color: var(--text); text-decoration: none; transition: transform 0.1s, border-color 0.1s; }
+    a.tile:hover { transform: translateY(-2px); border-color: var(--accent); }
+    a.tile b { font-size: 22px; }
+    a.tile small { color: var(--muted); font-size: 13px; word-break: break-all; }
+    a.tile .sw { width: 30px; height: 30px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3); }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+    .card b { display: block; font-size: 28px; margin-top: 4px; }
+    .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 0 28px; }
+    ul.check { list-style: none; padding: 0; margin: 0; }
+    ul.check li { display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--line); }
+    ul.check input { width: 20px; height: 20px; margin-top: 1px; accent-color: var(--accent); flex: none; }
+    ul.check li.done span { color: var(--muted); text-decoration: line-through; }
+    .note { padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,138,61,0.5); background: rgba(255,138,61,0.1); font-size: 15px; line-height: 1.6; }
+    .note code, li code, td code { background: rgba(0,0,0,0.35); padding: 1px 6px; border-radius: 5px; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 15px; }
+    td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    .cap { display: inline-block; width: 18px; height: 18px; border-radius: 50%; vertical-align: middle; border: 2px solid rgba(0,0,0,0.35); }
+    button.copy { font: inherit; font-size: 13px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>노을 공중전 체험전</h1>
+    <div class="sub">운영 페이지 · 노트북, TV, 통계로 가는 버튼을 모아 뒀어요</div>
+
+    <div class="addr">
+      <span class="dot" id="dot"></span>
+      <span>지금 서버 주소</span>
+      <code id="origin"></code>
+      <button class="copy" id="copy">주소 복사</button>
+      <span class="muted" id="status">확인 중…</span>
+    </div>
+    <div class="muted" id="ips" style="margin-top:8px"></div>
+
+    <div class="note hidden" id="flags" style="margin-top:14px"></div>
+
+    <h2>노트북 (자리 고정)</h2>
+    <div class="grid" id="seats"></div>
+
+    <h2>TV · 다른 화면</h2>
+    <div class="grid">
+      <a class="tile" id="t-tv"><b>TV 관전 화면</b><small></small><span class="muted">4분할 · 음악 · 오늘 요약이 나와요. 한 번 클릭해서 소리 켜기</span></a>
+      <a class="tile" id="t-party"><b>파티 게임</b><small></small><span class="muted">스모 · 보트 · 허들 · 미로 대기실</span></a>
+      <a class="tile" id="t-stats"><b>통계</b><small></small><span class="muted">판별 기록 · 시간대 · 최고 기록</span></a>
+      <a class="tile" id="t-csv"><b>통계 엑셀 받기</b><small></small><span class="muted">끝나고 꼭 받아 두기 (CSV)</span></a>
+    </div>
+
+    <h2>오늘 지금까지</h2>
+    <div class="cards" id="today"><div class="card"><span class="muted">불러오는 중…</span></div></div>
+
+    <div class="two">
+      <div>
+        <h2>시작 전 체크리스트</h2>
+        <ul class="check" id="check"></ul>
+        <p class="muted">체크한 건 이 컴퓨터에만 저장돼요 (날짜가 바뀌면 새로 시작).</p>
+      </div>
+      <div>
+        <h2>버튼 · 키 안내</h2>
+        <table>
+          <tr><td><i class="cap" style="background:#ff4a3d"></i></td><td>빨강 · 오른쪽 위</td><td>기관총</td></tr>
+          <tr><td><i class="cap" style="background:#3d8bff"></i></td><td>파랑 · 오른쪽 아래</td><td>미사일</td></tr>
+          <tr><td><i class="cap" style="background:#f4f1ea"></i></td><td>흰색 · 왼쪽 위</td><td>회피</td></tr>
+          <tr><td><i class="cap" style="background:#1b1b1f;border-color:rgba(255,255,255,0.55)"></i></td><td>검정 · 왼쪽 아래</td><td>경적 / 부스터</td></tr>
+          <tr><td></td><td>기울이기</td><td>조종</td></tr>
+          <tr><td></td><td>흔들기</td><td>필살기 · 충격파</td></tr>
+          <tr><td></td><td><code>ESC</code> 1.5초 꾹</td><td>지금 게임 끝내고 모두 로비로</td></tr>
+          <tr><td></td><td><code>Ctrl + Cmd + F</code></td><td>맥북 전체화면</td></tr>
+        </table>
+        <h2>문제가 생기면</h2>
+        <ul class="check" style="font-size:15px">
+          <li><span><b>컨트롤러 반응 없음</b> → USB 다시 꽂기 (자동으로 다시 연결) · 로비에서 <b>기울기 다시 설정</b></span></li>
+          <li><span><b>"서버 연결이 끊겼어요"</b> → 서버 컴퓨터와 공유기 확인. 안 되면 예비 주소 <code>https://sunset-game.onrender.com</code> (4대 + TV 모두 같이 바꾸기)</span></li>
+          <li><span><b>화면이 느림</b> → 주소 끝에 <code>&amp;low</code> 붙이기</span></li>
+          <li><span><b>게임이 안 끝남 / 꼬임</b> → <code>ESC</code> 1.5초 꾹, 그래도 안 되면 새로고침</span></li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { COLOR_CSS, COLOR_NAMES } from '/shared/sim.js';
+    const $ = (id) => document.getElementById(id);
+    const O = location.origin;
+    const secure = window.isSecureContext;
+
+    $('origin').textContent = O;
+    $('copy').onclick = async () => { try { await navigator.clipboard.writeText(O); $('copy').textContent = '복사됨'; } catch { $('copy').textContent = '복사 실패'; } };
+
+    const link = (id, path, label) => { const a = $(id); a.href = path; a.querySelector('small').textContent = O + (label || path); };
+    link('t-tv', '/?tv'); link('t-party', '/party.html'); link('t-stats', '/stats.html'); link('t-csv', '/api/stats.csv');
+
+    $('seats').innerHTML = [0, 1, 2, 3].map((i) => `
+      <a class="tile" href="/?p=${i + 1}">
+        <span class="sw" style="background:${COLOR_CSS[i]}"></span>
+        <b>노트북 ${i + 1} · ${COLOR_NAMES[i]}</b><small>${O}/?p=${i + 1}</small>
+      </a>`).join('');
+
+    // 컨트롤러는 https 이거나 크롬 flags 설정이 있어야 연결돼요
+    if (!secure) {
+      $('flags').classList.remove('hidden');
+      $('flags').innerHTML = `<b>이 노트북은 아직 컨트롤러 연결이 막혀 있어요.</b> (주소가 http라서)<br>
+        ① 주소창에 <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code> 입력
+        ② 입력칸에 <code>${O}</code> 입력 ③ <b>Enabled</b> → <b>Relaunch</b><br>
+        <span class="muted">설정이 끝난 노트북에서는 이 안내가 사라져요.</span>`;
+    }
+
+    async function info() {
+      try {
+        const r = await (await fetch('/api/info', { cache: 'no-store' })).json();
+        $('dot').className = 'dot ok';
+        $('status').textContent = `서버 정상 · 켜진 지 ${Math.floor(r.uptime / 60)}분`;
+        const others = r.ips.filter((ip) => !O.includes(ip));
+        $('ips').textContent = r.ips.length
+          ? `서버의 공유기 안 주소: ${r.ips.map((ip) => `http://${ip}:${r.port}`).join(' · ')}${others.length ? '' : ''}`
+          : '';
+      } catch {
+        $('dot').className = 'dot bad';
+        $('status').textContent = '서버에 연결할 수 없어요';
+      }
+    }
+    async function today() {
+      try {
+        const s = await (await fetch('/api/stats/today', { cache: 'no-store' })).json();
+        const names = { dogfight: '공중전', sumo: '스모', boat: '보트', dash: '허들', maze: '미로' };
+        const popular = Object.entries(s.byGame).sort((a, b) => b[1].plays - a[1].plays)[0];
+        $('today').innerHTML = `
+          <div class="card"><span class="muted">판 수</span><b>${s.plays}판</b></div>
+          <div class="card"><span class="muted">연 참가</span><b>${s.humans}명</b></div>
+          <div class="card"><span class="muted">가장 많이 한 게임</span><b style="font-size:22px">${popular && popular[1].plays ? `${names[popular[0]]} ${popular[1].plays}판` : '-'}</b></div>
+          <div class="card"><span class="muted">공중전 최다 격추</span><b style="font-size:22px">${s.topKill ? `${s.topKill.kills} (${s.topKill.name.replace(/[<>&]/g, '')})` : '-'}</b></div>`;
+      } catch { /* 다음에 */ }
+    }
+    info(); today();
+    setInterval(info, 10000); setInterval(today, 20000);
+
+    // 체크리스트 (이 컴퓨터에만, 날짜별)
+    const ITEMS = [
+      '서버 컴퓨터 켜고 이 페이지가 열리는지 확인 (위쪽 초록 점)',
+      '노트북 4대: 각자 자리 버튼으로 접속 (노트북 1~4)',
+      '노트북 4대: 크롬 flags 설정 (주황 안내가 안 보이면 완료)',
+      '컨트롤러 4개 연결 → 로비에서 기울기 설정',
+      '버튼 4개가 맞게 눌리는지 한 번씩 확인',
+      '노트북 전체화면 (Ctrl + Cmd + F) · 충전기 연결',
+      'TV: TV 관전 화면 열고 한 번 클릭해서 소리 켜기',
+      '공중전 한 판 + 파티 게임 하나 리허설',
+      '예비 주소 sunset-game.onrender.com 한 번 열어 깨워 두기',
+      '끝나면 통계 엑셀 받기',
+    ];
+    const key = `checklist-${new Date().toLocaleDateString('sv-SE')}`;
+    let done = [];
+    try { done = JSON.parse(localStorage.getItem(key) || '[]'); } catch { done = []; }
+    const save = () => { try { localStorage.setItem(key, JSON.stringify(done)); } catch { /* 저장 불가 */ } };
+    $('check').innerHTML = ITEMS.map((t, i) => `<li class="${done.includes(i) ? 'done' : ''}"><input type="checkbox" id="c${i}" ${done.includes(i) ? 'checked' : ''}><label for="c${i}"><span>${t}</span></label></li>`).join('');
+    ITEMS.forEach((_, i) => {
+      $(`c${i}`).onchange = (e) => {
+        done = e.target.checked ? [...new Set([...done, i])] : done.filter((x) => x !== i);
+        e.target.closest('li').classList.toggle('done', e.target.checked);
+        save();
+      };
+    });
+  </script>
+</body>
+</html>
